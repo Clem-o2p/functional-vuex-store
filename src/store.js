@@ -46,14 +46,21 @@ const store = new Vuex.Store({
         "todos"
       ]);
 
+      /* We can make a pipeline reusable */
+      const getUsers = {
+        pipeline: [
+          PromiseAll,
+          andThen(attachTodos),
+          andThen(extractUserFields)
+        ],
+        from: [api.getUsers(), api.getTodos()]
+      };
+
       pipe(
-        PromiseAll,
-        andThen(attachTodos),
-        andThen(extractUserFields),
+        ...getUsers.pipeline,
         andThen(commit("SET_USERS")),
-        /* othewise catches promises rejection but also runtime errors */
         otherwise(commit("SET_ERROR"))
-      )([api.getUsers(), api.getTodos()]);
+      )(getUsers.from);
     }
   }
 });
